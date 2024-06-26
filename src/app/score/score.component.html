@@ -1,0 +1,45 @@
+<div class="bg"></div>
+<div class="container">
+  <ng-container *ngFor="let frame of frames; let i = index;">
+    <div *ngIf="i <= currentFrame" class="frame" [ngClass]="{'even': i % 2 === 0, 'odd': i % 2 !== 0, 'strikeInfo': getFrameValue(i, 0) === 10, 'spareInfo': getFrameValue(i, 0) !== 10 && getFrameValue(i, 0) + getFrameValue(i, 1) === 10}">
+      <!-- <span>Frame {{ i + 1 }}: </span> -->
+      <mat-form-field appearance="fill">
+        <mat-label>Roll 1</mat-label>
+        <input matInput type="number" [(ngModel)]="frames[i][0]" placeholder="Roll 1" min="0" max="10" (change)="updateFrame(i)" />
+        <mat-error *ngIf="getFrameValue(i, 0) > 10">Wynik nie może być większy niż 10</mat-error>
+      </mat-form-field>
+      <span *ngIf="getFrameValue(i, 0) === 10" class="strike">It's a strike!</span>
+      <ng-container *ngIf="getFrameValue(i, 0) !== null && getFrameValue(i, 0) < 10">
+        <img *ngFor="let pin of [].constructor(getFrameValue(i, 0))" src="assets/bowling-pin.png" alt="Bowling Pin" style="width: 20px; height: 20px;">
+      </ng-container>
+      
+      <mat-form-field appearance="fill" *ngIf="showSecondRoll[i] || i === 9">
+        <mat-label>Roll 2</mat-label>
+        <input matInput type="number" [(ngModel)]="frames[i][1]" placeholder="Roll 2" min="0" [max]="getSecondRollMax(i)" (change)="updateFrame(i)" />
+        <mat-error *ngIf="!isFrameSumValid(i)">Suma rzutów nie może przekraczać 10</mat-error>
+      </mat-form-field>
+      <span *ngIf="getFrameValue(i, 0) !== 10 && getFrameValue(i, 0) + getFrameValue(i, 1) === 10" class="spare">It's a spare!</span>
+      <ng-container *ngIf="getFrameValue(i, 1) !== null && getFrameValue(i, 1) > 0">
+        <img *ngFor="let pin of [].constructor(getFrameValue(i, 1))" src="assets/bowling-pin.png" alt="Bowling Pin" style="width: 20px; height: 20px;">
+      </ng-container>
+      
+      <mat-form-field appearance="fill" *ngIf="i === 9 && (getFrameValue(i, 0) === 10 || getFrameValue(i, 0) + getFrameValue(i, 1) === 10)">
+        <mat-label>Roll 3</mat-label>
+        <input matInput type="number" [(ngModel)]="frames[i][2]" placeholder="Roll 3" min="0" max="10" />
+      </mat-form-field>
+      <ng-container *ngIf="getFrameValue(i, 2) !== null && getFrameValue(i, 2) > 0">
+        <img *ngFor="let pin of [].constructor(getFrameValue(i, 2))" src="assets/bowling-pin.png" alt="Bowling Pin" style="width: 20px; height: 20px;">
+      </ng-container>
+      <div class="absoluteNumFrame">Frame {{ i + 1 }}</div>
+    </div>
+  </ng-container>
+
+  <h2 class="score">Current score: {{ getScore() }}</h2>
+
+  <div class="reset-button-container">
+    <button mat-raised-button color="warn" (click)="initializeGame()">Reset Game</button>
+  </div>
+</div>
+
+
+

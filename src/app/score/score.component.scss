@@ -1,0 +1,113 @@
+$primary-color: #007bff;
+
+.bg {
+  background-image: url('/assets/bowling-pins.png');
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+  height: 150px;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 15px; 
+  z-index: 2; 
+
+  .frame {
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    position: relative;
+    width: 100%;
+    max-width: 1200px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+
+    &.even {
+      background: linear-gradient(90deg, #b3e0ff 0%, #99ccff 100%);
+    }
+    
+    &.odd {
+      background: linear-gradient(90deg, #66b3ff 0%, #6699ff 100%);
+    }    
+
+    .absoluteNumFrame {
+      position: absolute;
+      bottom: 20px;
+      right: 10px;
+      font-size: 50px;
+      font-style: italic;
+      color: #fff;
+    }
+
+    .strike {
+      font-style: italic;
+      font-weight: 700;
+      color: darken(red, 10%);
+      padding-left: 5px;
+      letter-spacing: 2px;
+      font-size: 22px;      
+    }
+  
+    .spare {
+      font-style: italic;
+      font-weight: 700;
+      color: darken(orange, 10%);
+      padding-left: 5px;
+      letter-spacing: 2px;
+      font-size: 20px;
+    }
+  }  
+
+  .strikeInfo {
+    border: 3px dashed red;
+    animation: pulseStrike 3s;
+  }
+
+  .spareInfo {
+    border: 3px dashed orange;
+  }
+}
+
+.score {
+  color: $primary-color;
+  z-index: 22;
+  
+  &-title {
+    font-weight: bold;
+  }
+  
+  &-value {
+    font-size: 1.2em;
+  }
+}
+
+@keyframes pulseStrike {
+  0% {
+      border-color: red;
+      box-shadow: 0 0 5px red;
+  }
+  50% {
+      border-color: transparent;
+      box-shadow: 0 0 20px red;
+  }
+  100% {
+      border-color: red;
+      box-shadow: 0 0 5px red;
+  }
+}
+
+@keyframes zoomInAndOut {
+  0% {
+      transform: translate(-50%, -50%) scale(1);
+      opacity: 1;
+  }
+  50% {
+      transform: translate(-50%, -50%) scale(.75);
+      opacity: 1;
+  }
+  100% {
+      transform: translate(-50%, -50%) scale(.5);
+      opacity: 0;
+  }
+}
