@@ -5,6 +5,8 @@ import { FormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { ActivatedRoute, Router } from '@angular/router';
+import { MatDialog } from '@angular/material/dialog';
 
 describe('ScoreComponent', () => {
   let component: ScoreComponent;
@@ -18,6 +20,30 @@ describe('ScoreComponent', () => {
         MatFormFieldModule,
         MatInputModule,
         BrowserAnimationsModule
+      ],
+      providers: [
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            snapshot: {
+              data: {
+                animation: 'HomePage'
+              }
+            }
+          }
+        },
+        {
+          provide: Router,
+          useValue: {
+            navigate: jasmine.createSpy('navigate')
+          }
+        },
+        {
+          provide: MatDialog,
+          useValue: {
+            open: jasmine.createSpy('open')
+          }
+        }
       ]
     })
     .compileComponents();

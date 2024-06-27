@@ -7,6 +7,9 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatDialog } from '@angular/material/dialog';
+import { DialogContentComponent } from '../dialog-content/dialog-content.component';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-score',
@@ -20,7 +23,8 @@ import { MatTooltipModule } from '@angular/material/tooltip';
     MatButtonModule,
     MatCardModule,
     MatIconModule,
-    MatTooltipModule
+    MatTooltipModule,
+    RouterLink
   ],
   templateUrl: './score.component.html',
   styleUrl: './score.component.scss'
@@ -29,14 +33,14 @@ export class ScoreComponent implements OnInit {
   frames: (number | null)[][] = Array.from({length: 10}, (_, i) => (i === 9 ? [null, null, null] : [null, null]));  
   showSecondRoll: boolean[] = Array(10).fill(false);
   currentFrame: number = 0;
+  isHomePage: boolean = false;
 
-  constructor(private cdr: ChangeDetectorRef){}
+  constructor(private cdr: ChangeDetectorRef, public dialog: MatDialog, private router: Router, private route: ActivatedRoute){}
   ngOnInit(): void {
-    this.initializeGame();
-    // setTimeout(() => {
-    //   this.testScoring()
-    //   console.log('FRAMES', this.frames)
-    // }, 5000)   
+    this.isHomePage = this.route.snapshot.data['animation'] === 'HomePage';
+    if (!this.isHomePage) {
+      this.initializeGame();
+    } 
   } 
 
   initializeGame() {
@@ -82,8 +86,7 @@ export class ScoreComponent implements OnInit {
     
     this.frames = [...this.frames];
     this.cdr.detectChanges();
-  }
-  
+  }  
   
   moveToNextFrame(currentFrameIndex: number) {
     if (currentFrameIndex < 9) {
@@ -148,21 +151,14 @@ export class ScoreComponent implements OnInit {
     return score;
   }
 
-  getStrikeBonus(frameIndex: number): number {
-    // if (frameIndex >= 9) return 0;
+  getStrikeBonus(frameIndex: number): number {    
     if(frameIndex === 9){
       return (this.frames[9][1] ?? 0) + (this.frames[9][2] ?? 0)
     }
     const nextFrame = this.frames[frameIndex + 1];
     if (!nextFrame) return 0;
   
-    const nextFirstRoll = nextFrame[0] ?? 0;
-    // if (nextFirstRoll === 10) {
-    //   const nextNextFrame = this.frames[frameIndex + 2];
-    //   return 10 + (nextNextFrame?.[0] ?? 0);
-    // } else {
-    //   return nextFirstRoll + (nextFrame[1] ?? 0);
-    // }
+    const nextFirstRoll = nextFrame[0] ?? 0;    
     if(nextFirstRoll === 10 && frameIndex < 8) {
       const nextNextFrame = this.frames[frameIndex + 2];
       return 10 + (nextNextFrame?.[0] ?? 0)
@@ -171,8 +167,7 @@ export class ScoreComponent implements OnInit {
     }
   }
 
-  getSpareBonus(frameIndex: number): number {
-    // if(frameIndex >= 9) return 0;
+  getSpareBonus(frameIndex: number): number {   
     if(frameIndex === 9){
       return this.frames[9][2] ?? 0;
     }
@@ -180,22 +175,11 @@ export class ScoreComponent implements OnInit {
     return nextFrame?.[0] ?? 0;
   }
 
-  testScoring() {
-    this.frames = [
-      [8, 2],  // First frame: strike
-      [5, 5],      // Second frame: spare
-      [null, null],  // Rest of the frames
-      [null, null],
-      [null, null],
-      [null, null],
-      [null, null],
-      [null, null],
-      [null, null],
-      [null, null, null]
-    ];
-    this.currentFrame = 2; 
-    this.showSecondRoll = [true, true, false, false, false, false, false, false, false, true];
-    console.log("Score after two frames:", this.getScore());
-    this.cdr.detectChanges(); 
+  openDialog(){
+    this.dialog.open(DialogContentComponent)
   }
+
+  startGame() {
+    this.router.navigate(['/score']);
+  }  
 }

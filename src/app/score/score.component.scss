@@ -5,14 +5,40 @@ $primary-color: #007bff;
   background-size: contain;
   background-position: center;
   background-repeat: no-repeat;
-  height: 150px;
+  height: 150px; 
+  position: relative;
+
+  &:before,
+  &:after {
+    position: absolute;
+    top: 50px;
+    font-size: 44px;
+    background: linear-gradient(90deg, #ff0000, #ff7f7f);
+    font-weight: 700;
+    letter-spacing: 3px;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    line-height: 50px;
+  }
+
+  &:before {
+    left: 50%;
+    transform: translateX(-300px); 
+    content: 'Bowling';
+  }
+
+  &:after {
+    left: 50%;
+    transform: translateX(100px); 
+    content: 'Calculator';
+  }
 }
 
 .container {
   max-width: 1200px;
   margin: 0 auto;
   padding: 15px; 
-  z-index: 2; 
+  z-index: 2;  
 
   .frame {
     padding: 10px;
@@ -22,22 +48,74 @@ $primary-color: #007bff;
     width: 100%;
     max-width: 1200px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    display: flex;
 
     &.even {
-      background: linear-gradient(90deg, #b3e0ff 0%, #99ccff 100%);
+      background: linear-gradient(90deg, #69839E 0%, #D0E4F1 100%);
     }
     
     &.odd {
-      background: linear-gradient(90deg, #66b3ff 0%, #6699ff 100%);
+      background: linear-gradient(90deg, #D0E4F1 0%, #69839E 100%);
+    }    
+
+    .pins-info {      
+      margin: 0 5px;
+      text-align: center;
+      
+      .pin {
+        width: 50px;
+        height: 50px;
+        margin-left: - 30px;
+  
+        &.first {
+          margin-left: 0;
+        }
+      }
+
+      .left-pin {
+        background-color: #fff;
+        padding: 2px 5px;
+        border-radius: 5px;
+        color: darken(darkgray, 15%);
+        width: fit-content;
+        display: flex;
+        justify-content: center; 
+        align-items: center;   
+        margin: 0 auto;    
+      }
     }    
 
     .absoluteNumFrame {
       position: absolute;
       bottom: 20px;
       right: 10px;
-      font-size: 50px;
+      font-size: 40px;
       font-style: italic;
       color: #fff;
+    }
+
+    .absoluteSpare {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font-size: 30px;
+      font-style: italic;
+      color: darken(green, 10%);
+      background-color: #fff;
+      border-radius: 5px;
+      padding: 5px;
+    }
+
+    .absoluteStrike {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font-size: 30px;
+      font-style: italic;
+      color: darken(green, 10%);
+      background-color: #fff;
+      border-radius: 5px;
+      padding: 5px;
     }
 
     .strike {
@@ -56,25 +134,37 @@ $primary-color: #007bff;
       padding-left: 5px;
       letter-spacing: 2px;
       font-size: 20px;
+      text-shadow: 2px 2px 4px rgba(255,255,255,0.8);
     }
   }  
 
-  .strikeInfo {
-    border: 3px dashed red;
-    animation: pulseStrike 3s;
+  .strikeInfo {     
+    background: linear-gradient(to right, rgb(77, 124, 89), darken(rgb(113, 243, 27), 20%)) !important; 
   }
 
-  .spareInfo {
-    border: 3px dashed orange;
+  .spareInfo {    
+    background: linear-gradient(to right, rgb(77, 124, 89), darken(rgb(40, 97, 63), 20%)) !important;       
+  }
+}
+
+@keyframes gradientAnimation {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: 0 0;
   }
 }
 
 .score {
-  color: $primary-color;
-  z-index: 22;
+  color: darkred; 
+  border: 3px solid darkred;
+  border-radius: 5px;
+  padding: 10px;
   
-  &-title {
-    font-weight: bold;
+  &-title {    
+    margin-right: 5px;
+    display: inline-block;
   }
   
   &-value {
@@ -82,32 +172,51 @@ $primary-color: #007bff;
   }
 }
 
-@keyframes pulseStrike {
-  0% {
-      border-color: red;
-      box-shadow: 0 0 5px red;
-  }
-  50% {
-      border-color: transparent;
-      box-shadow: 0 0 20px red;
-  }
-  100% {
-      border-color: red;
-      box-shadow: 0 0 5px red;
-  }
+.reset-button-container button { 
+  margin-right: 10px;  
 }
 
-@keyframes zoomInAndOut {
-  0% {
-      transform: translate(-50%, -50%) scale(1);
-      opacity: 1;
+.introduction {
+  font-size: 22px;
+  line-height: 1.5em;
+  text-align: center;
+  max-width: 600px;
+  margin: 0 auto;
+  padding-top: 50px;
+}
+
+.start-button-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  margin: 20px 0;
+  padding-top: 50px;
+}
+
+.start-button {
+  width: 300px !important;
+  height: 60px !important;
+  font-size: 24px !important;
+  line-height: 60px !important;
+  padding: 0 !important;
+
+  // Nadpisanie stylów Angular Material
+  ::ng-deep .mat-mdc-button-persistent-ripple {
+    border-radius: 4px !important;
   }
-  50% {
-      transform: translate(-50%, -50%) scale(.75);
-      opacity: 1;
+
+  ::ng-deep .mdc-button {
+    height: 60px !important;
+    padding: 0 !important;
   }
-  100% {
-      transform: translate(-50%, -50%) scale(.5);
-      opacity: 0;
+
+  ::ng-deep .mdc-button__label {
+    font-size: 24px !important;
   }
+
+  // Centrowanie tekstu
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
 }

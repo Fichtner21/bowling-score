@@ -1,6 +1,18 @@
 .main {
   position: relative; 
-  min-height: 100vh; 
+  min-height: 100vh;  
+
+  .container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+
+    h1 {
+      margin-bottom: 20px;
+    }
+  }
 }
 
 .main::before {
@@ -17,3 +29,4 @@
   opacity: 0.1; 
   z-index: -1; 
 }
+
