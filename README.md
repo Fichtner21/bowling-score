@@ -1,4 +1,23 @@
-# BowlingScore
+# Bowling Score Calculator
+
+This project is a simple bowling score calculator built with Angular. It allows users to start a new game, enter results manually, or load a pre-defined game from a JSON file.
+
+## Table of Contents
+
+- [Installation](#installation)
+- [Usage](#usage)
+- [Components](#components)
+  - [AppComponent](#appcomponent)
+  - [ScoreComponent](#scorecomponent)
+- [Animations](#animations)
+- [License](#license)
+
+## Usage
+# Start New Game: Click the "Start New Game" button to begin a new bowling game.
+# Load Predefined Game: Click the "Load Predefined Game" button to load a game from a JSON file.
+# Enter Scores: Enter the scores for each roll in the input fields provided.
+# Reset Game: Click the "Reset Game" button to reset the current game.
+# Home: Click the "Home" button to return to the home page.
 
 This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 17.0.10.
 

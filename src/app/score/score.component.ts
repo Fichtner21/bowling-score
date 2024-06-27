@@ -10,6 +10,17 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog } from '@angular/material/dialog';
 import { DialogContentComponent } from '../dialog-content/dialog-content.component';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { HttpClient, HttpClientModule } from '@angular/common/http';
+
+interface Frame {
+  first: number | null;
+  second: number | null;
+  third?: number | null; 
+}
+
+interface GameData {
+  frames: Frame[];
+}
 
 @Component({
   selector: 'app-score',
@@ -24,47 +35,117 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
     MatCardModule,
     MatIconModule,
     MatTooltipModule,
-    RouterLink
+    RouterLink,
+    HttpClientModule
   ],
   templateUrl: './score.component.html',
-  styleUrl: './score.component.scss'
+  styleUrls: ['./score.component.scss']
 })
 export class ScoreComponent implements OnInit {
-  frames: (number | null)[][] = Array.from({length: 10}, (_, i) => (i === 9 ? [null, null, null] : [null, null]));  
+  frames: Frame[] = Array.from({ length: 10 }, (_, i) => (i === 9 ? { first: null, second: null, third: null } : { first: null, second: null }));
   showSecondRoll: boolean[] = Array(10).fill(false);
   currentFrame: number = 0;
   isHomePage: boolean = false;
+  isGameLoaded: boolean = false;
 
-  constructor(private cdr: ChangeDetectorRef, public dialog: MatDialog, private router: Router, private route: ActivatedRoute){}
-  ngOnInit(): void {
-    this.isHomePage = this.route.snapshot.data['animation'] === 'HomePage';
-    if (!this.isHomePage) {
-      this.initializeGame();
-    } 
+  constructor(private cdr: ChangeDetectorRef, public dialog: MatDialog, private router: Router, private route: ActivatedRoute, private http: HttpClient,) {}
+
+  ngOnInit(): void {   
+    this.route.queryParams.subscribe(params => {      
+      if (params['loaded'] === 'true') {        
+        this.loadGameFromJson();
+      } else {        
+        this.isHomePage = this.route.snapshot.data['animation'] === 'HomePage';
+      }
+    });
   } 
 
   initializeGame() {
-    this.frames = Array.from({ length: 10 }, (_, i) => (i === 9 ? [null, null, null] : [null, null]));
+    this.frames = Array.from({ length: 10 }, (_, i) => (i === 9 ? { first: null, second: null, third: null } : { first: null, second: null }));
     this.showSecondRoll = Array(10).fill(false);
     this.currentFrame = 0;
+    this.isGameLoaded = false;
+  } 
+
+  loadGameFromJson() {
+    this.http.get<GameData>('assets/game.json').subscribe(
+      (data) => this.processGameData(data),
+      (error) => console.error('Error loading game:', error)
+    );
+  }
+
+  processGameData(data: GameData) {    
+    if (data && data.frames && Array.isArray(data.frames)) {
+      this.frames = data.frames.map((frame, index) => ({
+        first: frame.first,
+        second: frame.second,
+        third: index === 9 ? frame.third : null
+      }));
+      this.currentFrame = this.frames.findIndex(frame => frame.first === null || frame.second === null);
+      if (this.currentFrame === -1) this.currentFrame = 10;
+      this.showSecondRoll = this.frames.map(frame => frame.first !== null && frame.first < 10);
+      this.isHomePage = false;
+      this.isGameLoaded = true;
+      this.cdr.detectChanges();
+    } else {
+      console.error('Invalid data format:', data);
+    }
+  }
+
+  validateInput(event: any, frameIndex: number, rollIndex: 'first' | 'second' | 'third') {
+    const input = event.target as HTMLInputElement;
+    let value = parseInt(input.value);
+    
+    if (isNaN(value)) {
+      input.value = '';
+      return;
+    }
+
+    if (frameIndex === 9) {      
+      if (rollIndex === 'first') {
+        value = Math.max(0, Math.min(10, value));
+      } else if (rollIndex === 'second') {
+        if (this.frames[frameIndex].first === 10) {
+          value = Math.max(0, Math.min(10, value));
+        } else {
+          value = Math.max(0, Math.min(10 - (this.frames[frameIndex].first ?? 0), value));
+        }
+      } else if (rollIndex === 'third') {
+        if (this.frames[frameIndex].first === 10 || (this.frames[frameIndex].first ?? 0) + (this.frames[frameIndex].second ?? 0) === 10) {
+          value = Math.max(0, Math.min(10, value));
+        } else {
+          input.value = '';
+          return;
+        }
+      }
+    } else {     
+      if (rollIndex === 'first') {
+        value = Math.max(0, Math.min(10, value));
+      } else if (rollIndex === 'second') {
+        value = Math.max(0, Math.min(10 - (this.frames[frameIndex].first ?? 0), value));
+      }
+    }
+
+    input.value = value.toString();
+    this.frames[frameIndex][rollIndex] = value;
   }
 
   updateFrame(frameIndex: number) {
     const currentFrame = this.frames[frameIndex];
   
     if (frameIndex < 9) {
-      if (currentFrame[0] !== null && currentFrame[0] < 10) {
+      if (currentFrame.first !== null && currentFrame.first < 10) {
         this.showSecondRoll[frameIndex] = true;
-      } else if (currentFrame[0] === 10) {
+      } else if (currentFrame.first === 10) {
         this.showSecondRoll[frameIndex] = false;
-        currentFrame[1] = null;
+        currentFrame.second = null;
         this.moveToNextFrame(frameIndex);
       }      
      
-      if (currentFrame[0] !== null && currentFrame[1] !== null) {
-        const sum = currentFrame[0] + currentFrame[1];
+      if (currentFrame.first !== null && currentFrame.second !== null) {
+        const sum = currentFrame.first + currentFrame.second;
         if (sum > 10) {
-          currentFrame[1] = null; 
+          currentFrame.second = null; 
         } else {
           this.moveToNextFrame(frameIndex);
         }
@@ -72,18 +153,21 @@ export class ScoreComponent implements OnInit {
     } else if (frameIndex === 9) {
       this.showSecondRoll[frameIndex] = true;      
       
-      if (currentFrame[0] === 10) {        
-      } else if (currentFrame[0] !== null && currentFrame[1] !== null) {
-        const sum = currentFrame[0] + currentFrame[1];
+      if (currentFrame.first === 10) {        
+      } else if (currentFrame.first !== null && currentFrame.second !== null) {
+        const sum = currentFrame.first + currentFrame.second;
         if (sum === 10) {         
         } else if (sum < 10) {          
           this.currentFrame = 10;
         } else {
-          currentFrame[1] = null; 
+          currentFrame.second = null; 
         }
       }
     }    
-    
+    if (this.isFrameComplete(frameIndex) && frameIndex < 9) {
+      this.currentFrame = frameIndex + 1;
+    }
+
     this.frames = [...this.frames];
     this.cdr.detectChanges();
   }  
@@ -97,12 +181,12 @@ export class ScoreComponent implements OnInit {
   isFrameSumValid(frameIndex: number): boolean {
     const frame = this.frames[frameIndex];
     if (frameIndex < 9) {
-      return (frame[0] ?? 0) + (frame[1] ?? 0) <= 10;
+      return (frame.first ?? 0) + (frame.second ?? 0) <= 10;
     } else {      
-      if (frame[0] === 10 || (frame[0] !== null && frame[1] !== null && frame[0] + frame[1] === 10)) {
+      if (frame.first === 10 || (frame.first !== null && frame.second !== null && frame.first + frame.second === 10)) {
         return true; 
       } else {
-        return (frame[0] ?? 0) + (frame[1] ?? 0) <= 10;
+        return (frame.first ?? 0) + (frame.second ?? 0) <= 10;
       }
     }
   }
@@ -110,22 +194,22 @@ export class ScoreComponent implements OnInit {
   isFrameComplete(frameIndex: number): boolean {
     const frame = this.frames[frameIndex];
     if (frameIndex < 9) {
-      return frame[0] === 10 || (frame[0] !== null && frame[1] !== null);
-    } else {      
-      if (frame[0] === 10 || (frame[0] !== null && frame[1] !== null && frame[0] + frame[1] === 10)) {
-        return frame[2] !== null;
+      return frame.first === 10 || (frame.first !== null && frame.second !== null);
+    } else {
+      if (frame.first === 10 || (frame.first !== null && frame.second !== null && frame.first + frame.second === 10)) {
+        return frame.third !== null;
       } else {
-        return frame[0] !== null && frame[1] !== null;
+        return frame.first !== null && frame.second !== null;
       }
     }
   }
 
-  getFrameValue(frameIndex: number, rollIndex: number): number {
+  getFrameValue(frameIndex: number, rollIndex: 'first' | 'second' | 'third'): number {
     return this.frames[frameIndex]?.[rollIndex] ?? 0;
   }
 
   getSecondRollMax(frameIndex: number): number {
-    const firstRoll = this.frames[frameIndex][0];
+    const firstRoll = this.frames[frameIndex].first;
     if (frameIndex === 9) {
       return firstRoll === 10 ? 10 : 10 - (firstRoll ?? 0);
     }
@@ -136,50 +220,87 @@ export class ScoreComponent implements OnInit {
     let score = 0;
     for (let i = 0; i < 10; i++) {
       const frame = this.frames[i];
-      const [firstRoll, secondRoll] = frame;
+      const { first, second } = frame;
   
-      if (firstRoll === null) continue;
+      if (first === null) continue;
   
-      if (firstRoll === 10) { // strike
+      if (first === 10) { // strike
         score += 10 + this.getStrikeBonus(i);
-      } else if (firstRoll + (secondRoll || 0) === 10) { // spare
+      } else if (first + (second || 0) === 10) { // spare
         score += 10 + this.getSpareBonus(i);
       } else {
-        score += firstRoll + (secondRoll || 0);
+        score += first + (second || 0);
       }
     }
     return score;
   }
 
-  getStrikeBonus(frameIndex: number): number {    
+  getStrikeBonus(frameIndex: number): number {
     if(frameIndex === 9){
-      return (this.frames[9][1] ?? 0) + (this.frames[9][2] ?? 0)
+      return (this.frames[9].second ?? 0) + (this.frames[9].third ?? 0);
     }
     const nextFrame = this.frames[frameIndex + 1];
     if (!nextFrame) return 0;
   
-    const nextFirstRoll = nextFrame[0] ?? 0;    
+    const nextFirstRoll = nextFrame.first ?? 0;
     if(nextFirstRoll === 10 && frameIndex < 8) {
       const nextNextFrame = this.frames[frameIndex + 2];
-      return 10 + (nextNextFrame?.[0] ?? 0)
+      return 10 + (nextNextFrame?.first ?? 0);
     } else {
-      return nextFirstRoll + (nextFrame[1] ?? 0)
+      return nextFirstRoll + (nextFrame.second ?? 0);
     }
   }
 
-  getSpareBonus(frameIndex: number): number {   
+  getSpareBonus(frameIndex: number): number {
     if(frameIndex === 9){
-      return this.frames[9][2] ?? 0;
+      return this.frames[9].third ?? 0;
     }
     const nextFrame = this.frames[frameIndex + 1];
-    return nextFrame?.[0] ?? 0;
+    return nextFrame?.first ?? 0;
   }
 
-  openDialog(){
-    this.dialog.open(DialogContentComponent)
+  openDialog(type: 'info' | 'reset') {
+    let dialogData;
+    if (type === 'info') {
+      dialogData = {
+        title: 'How to fill the score',
+        content: 'Enter the number of pins knocked down in the appropriate input, move to the next ones with the cursor or by pressing ENTER',
+        cancelText: 'Close',
+        confirmText: 'OK'
+      };
+    } else if (type === 'reset') {
+      dialogData = {
+        title: 'Confirm reset',
+        content: 'Are you sure you want to reset your game results?',
+        cancelText: 'Reject',
+        confirmText: 'Reset'
+      };
+    }
+
+    const dialogRef = this.dialog.open(DialogContentComponent, {
+      data: dialogData
+    });
+
+    if (type === 'reset') {
+      dialogRef.afterClosed().subscribe(result => {
+        if (result === true) {
+          this.initializeGame();
+        }
+      });
+    }
   }
 
-  startGame() {
+  loadPredefinedGame() {
+    this.router.navigate(['/score'], { queryParams: { loaded: 'true' } });
+  }
+
+  startGame() {    
+    this.isHomePage = false;
+    this.initializeGame();
     this.router.navigate(['/score']);
-  }  
+  } 
+
+  goHome() {
+    this.router.navigate(['/']);   
+  }
 }

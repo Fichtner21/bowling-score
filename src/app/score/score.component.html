@@ -1,52 +1,50 @@
 <div class="bg"></div>
 <div class="container">
   <ng-container *ngIf="isHomePage">
-    <p class="introduction">This is a simple bowling calculator, using it you will be able to write down the result of a game for 1 person. Click "Start" to start entering your results.</p>
-    <div class="start-button-container">     
-      <button mat-raised-button color="primary" (click)="startGame()" class="start-button">Start</button>
-    </div>    
+    <p class="introduction">This is a simple bowling calculator. You can either start a new game and enter results manually, or load a pre-defined game from a JSON file.</p>
+    <div class="start-button-container">
+      <button mat-raised-button color="primary" (click)="startGame()" class="start-button">Start New Game</button>
+      <button mat-raised-button (click)="loadPredefinedGame()">Load Predefined Game</button>
+    </div>
   </ng-container>
   <ng-container *ngIf="!isHomePage">
     <ng-container *ngFor="let frame of frames; let i = index;">
-      <div *ngIf="i <= currentFrame" class="frame" [ngClass]="{'even': i % 2 === 0, 'odd': i % 2 !== 0, 'strikeInfo': getFrameValue(i, 0) === 10, 'spareInfo': getFrameValue(i, 0) !== 10 && getFrameValue(i, 0) + getFrameValue(i, 1) === 10}">
+      <div *ngIf="isGameLoaded || i <= currentFrame" class="frame" [ngClass]="{'even': i % 2 === 0, 'odd': i % 2 !== 0, 'strikeInfo': frame.first === 10, 'spareInfo': frame.first !== 10 && (frame.first ?? 0) + (frame.second ?? 0) === 10}">
         <mat-form-field appearance="fill">
           <mat-label>Roll 1</mat-label>
-          <input matInput type="number" [(ngModel)]="frames[i][0]" placeholder="Roll 1" min="0" max="10" (change)="updateFrame(i)" />
-          <mat-error *ngIf="getFrameValue(i, 0) > 10">The score cannot be greater than 10</mat-error>
+          <input matInput type="number" [(ngModel)]="frame.first" placeholder="Roll 1" min="0" max="10" (change)="updateFrame(i)" [disabled]="isGameLoaded" />
+          <mat-error *ngIf="frame.first !== null && frame.first > 10">The score cannot be greater than 10</mat-error>
         </mat-form-field>
-        <!-- <span *ngIf="getFrameValue(i, 0) === 10" class="strike">It's a strike!</span> -->
-        <ng-container *ngIf="getFrameValue(i, 0) !== null && getFrameValue(i, 0) < 10">
+        <ng-container *ngIf="frame.first !== null && frame.first < 10">
           <div class="pins-info">
-            <img *ngFor="let pin of [].constructor(getFrameValue(i, 0)); let first = first" src="assets/bowling-pin.png" alt="Bowling Pin" class="pin" [class.first]="first">
-            <div *ngIf="frames[i][0] !== null" class="left-pin">Left {{ 10 - getFrameValue(i, 0) }}</div>
+            <img *ngFor="let pin of [].constructor(frame.first); let first = first" src="assets/bowling-pin.png" alt="Bowling Pin" class="pin" [class.first]="first">
+            <div *ngIf="frame.first !== null" class="left-pin">Left {{ 10 - frame.first }}</div>
           </div>
         </ng-container>
         
         <mat-form-field appearance="fill" *ngIf="showSecondRoll[i] || i === 9">
           <mat-label>Roll 2</mat-label>
-          <input matInput type="number" [(ngModel)]="frames[i][1]" placeholder="Roll 2" min="0" [max]="getSecondRollMax(i)" (change)="updateFrame(i)" />
+          <input matInput type="number" [(ngModel)]="frame.second" placeholder="Roll 2" min="0" [max]="getSecondRollMax(i)" (change)="updateFrame(i)" [disabled]="isGameLoaded" />
           <mat-error *ngIf="!isFrameSumValid(i)">The sum of rolls cannot exceed 10</mat-error>
         </mat-form-field>
-        <!-- <span *ngIf="getFrameValue(i, 0) !== 10 && getFrameValue(i, 0) + getFrameValue(i, 1) === 10" class="spare">It's a spare!</span> -->
-        <ng-container *ngIf="getFrameValue(i, 1) !== null && getFrameValue(i, 1) > 0">
-          <!-- <img *ngFor="let pin of [].constructor(getFrameValue(i, 1))" src="assets/bowling-pin.png" alt="Bowling Pin" style="width: 20px; height: 20px;"> -->
+        <ng-container *ngIf="frame.second !== null && frame.second > 0">
           <div class="pins-info">
-            <img *ngFor="let pin of [].constructor(getFrameValue(i, 1)); let first = first" src="assets/bowling-pin.png" alt="Bowling Pin" class="pin" [class.first]="first">
-            <div *ngIf="frames[i][0] !== null" class="left-pin">Left {{ 10 - (getFrameValue(i, 0) + getFrameValue(i, 1) + (frames[i][2] || 0)) }}</div>
+            <img *ngFor="let pin of [].constructor(frame.second); let first = first" src="assets/bowling-pin.png" alt="Bowling Pin" class="pin" [class.first]="first">
+            <div *ngIf="frame.first !== null" class="left-pin">Left {{ 10 - ((frame.first ?? 0) + (frame.second ?? 0) + (frame.third ?? 0)) }}</div>
           </div>
         </ng-container>
         
-        <mat-form-field appearance="fill" *ngIf="i === 9 && (getFrameValue(i, 0) === 10 || getFrameValue(i, 0) + getFrameValue(i, 1) === 10)">
+        <mat-form-field appearance="fill" *ngIf="i === 9 && (frame.first === 10 || (frame.first ?? 0) + (frame.second ?? 0) === 10)">
           <mat-label>Roll 3</mat-label>
-          <input matInput type="number" [(ngModel)]="frames[i][2]" placeholder="Roll 3" min="0" max="10" />
+          <input matInput type="number" [(ngModel)]="frame.third" placeholder="Roll 3" min="0" max="10" [disabled]="isGameLoaded" />
         </mat-form-field>
-        <ng-container *ngIf="getFrameValue(i, 2) !== null && getFrameValue(i, 2) > 0">
-          <img *ngFor="let pin of [].constructor(getFrameValue(i, 2))" src="assets/bowling-pin.png" alt="Bowling Pin" style="width: 20px; height: 20px;">
+        <ng-container *ngIf="frame.third != null && frame.third > 0">
+          <img *ngFor="let pin of [].constructor(frame.third)" src="assets/bowling-pin.png" alt="Bowling Pin" style="width: 20px; height: 20px;">
         </ng-container>
-        <div class="absoluteStrike" *ngIf="getFrameValue(i, 0) === 10">
+        <div class="absoluteStrike" *ngIf="frame.first === 10">
           Strike!
         </div>
-        <div *ngIf="getFrameValue(i, 0) !== 10 && getFrameValue(i, 0) + getFrameValue(i, 1) === 10" class="absoluteSpare">
+        <div *ngIf="frame.first !== 10 && (frame.first ?? 0) + (frame.second ?? 0) === 10" class="absoluteSpare">
           Spare!
         </div>
         <div class="absoluteNumFrame">Frame {{ i + 1 }}</div>
@@ -59,13 +57,9 @@
     </h2>
 
     <div class="reset-button-container">
-      <button mat-raised-button color="accent" (click)="openDialog()">How to fill the score <mat-icon>info</mat-icon></button>
-      <button mat-raised-button color="primary" (click)="initializeGame()">Reset Game</button> 
-      <button mat-raised-button routerLink="/">Home</button>   
+      <button mat-raised-button color="accent" (click)="openDialog('info')">How to fill the score <mat-icon>info</mat-icon></button>
+      <button mat-raised-button color="primary" (click)="openDialog('reset')">Reset Game</button> 
+      <button mat-raised-button (click)="goHome()">Home</button>
     </div>
   </ng-container>
 </div>
-
-
-
-

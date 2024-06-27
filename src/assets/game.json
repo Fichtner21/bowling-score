@@ -1,0 +1,14 @@
+{
+  "frames": [
+    { "first": 10, "second": null },
+    { "first": 7, "second": 3 },
+    { "first": 9, "second": 0 },
+    { "first": 10, "second": null },
+    { "first": 0, "second": 8 },
+    { "first": 8, "second": 2 },
+    { "first": 10, "second": null },
+    { "first": 10, "second": null },
+    { "first": 9, "second": 1 },
+    { "first": 5, "second": 4, "third": null }
+  ]
+}

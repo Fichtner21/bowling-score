@@ -1,10 +1,8 @@
 import { Component, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
-import { ScoreComponent } from './score/score.component';
+import { RouterLink, RouterOutlet } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { transition, trigger, style, animate } from '@angular/animations';
-import { filter } from 'rxjs';
 
 @Component({
   selector: 'app-root',
